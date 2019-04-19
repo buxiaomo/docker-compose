@@ -1,0 +1,37 @@
+version: '3.4'
+services:
+    registry:
+        image: registry:2.6.1
+        hostname: registry
+        ports:
+            - 10000:5000/tcp
+        networks:
+            registry:
+                aliases:
+                    - registry
+        configs:
+          - source: config
+            target: /etc/docker/registry/config.yml
+    redis:
+        image: redis:4.0.6
+        hostname: redis
+        networks:
+            registry:
+                aliases:
+                    - redis
+        deploy:
+            mode: replicated
+            replicas: 1
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    config:
+        file: ./config.yml
+
+networks:
+    registry:
+        external: true

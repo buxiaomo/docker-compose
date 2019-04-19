@@ -1,0 +1,315 @@
+version: '3.4'
+services:
+    ftp:
+        image: daocloud.io/buxiaomo/proftpd:1.3.5a
+        ports:
+            - 20:20/tcp
+            - 21:21/tcp
+            - 60000-60100:60000-60100/tcp
+        networks:
+            virtualhost:
+                aliases:
+                    - ftp
+        environment:
+            - MYSQL_HOST=mysql
+            - MYSQL_PORT=3306
+            - MYSQL_DATABASE=ftp
+            - MYSQL_USER=ftp
+            - MYSQL_PASSWORD=ftp
+            - MasqueradeAddress=xxx.xxx.xxx.xxx
+        volumes:
+            - ./www:/var/www/html
+            - /run/docker.sock:/run/docker.sock:ro
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                # order: start-first
+                parallelism: 1
+                delay: 10s
+            # placement:
+            #     constraints:
+            #         - node.labels.virtualhost.ftp == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+
+    mysql:
+        image: mysql:5.7.20
+        ports:
+            - 3306:3306/tcp
+        networks:
+            virtualhost:
+                aliases:
+                    - mysql
+            lnmp:
+                aliases:
+                    - mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=biOF4cyR2YpG
+            - MYSQL_DATABASE=ftp
+            - MYSQL_USER=ftp
+            - MYSQL_PASSWORD=ftp
+        configs:
+          - source: mysql
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+          - source: ftpinitdb
+            target: /docker-entrypoint-initdb.d/ftp.sql
+        volumes:
+            - ./mysql/data:/var/lib/mysql
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                # order: start-first
+                parallelism: 1
+                delay: 10s
+            # placement:
+            #     constraints:
+            #         - node.labels.virtualhost.mysql == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+
+    nginx:
+        image: nginx:1.13.8-alpine
+        ports:
+            - 80:80/tcp
+        networks:
+            lnmp:
+                aliases:
+                    - nginx
+        configs:
+          - source: nginx
+            target: /etc/nginx/nginx.conf
+          - source: nginx_defualt
+            target: /etc/nginx/conf.d/default.conf
+        volumes:
+            - ./www:/var/www/html:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.lnmp == true
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    # php56:
+    #     image: php:5.6-fpm-alpine3.7
+    #     networks:
+    #         lnmp:
+    #             aliases:
+    #                 - php56
+    #     configs:
+    #       - source: php
+    #         target: /usr/local/etc/php/php.ini
+    #       - source: phpuploads
+    #         target: /usr/local/etc/php/conf.d/uploads.ini
+    #     volumes:
+    #         - ./www:/var/www/html:rw
+    #         - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    #     deploy:
+    #         mode: replicated
+    #         replicas: 1
+    #         resources:
+    #             limits:
+    #                 cpus: '0.50'
+    #                 memory: 100M
+    #             reservations:
+    #                 cpus: '0.25'
+    #                 memory: 50M
+    #         update_config:
+    #             order: start-first
+    #             parallelism: 1
+    #             delay: 10s
+    #         placement:
+    #             constraints:
+    #                 - node.labels.lnmp == true
+    #     logging:
+    #         driver: json-file
+    #         options:
+    #             max-file: '3'
+    #             max-size: 100m
+    #     # healthcheck:
+    #     #     test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+    #     #     interval: 10s
+    #     #     timeout: 5s
+    #     #     retries: 3
+
+    # php70:
+    #     image: php:7.0-fpm-alpine3.7
+    #     networks:
+    #         lnmp:
+    #             aliases:
+    #                 - php70
+    #     configs:
+    #       - source: php
+    #         target: /usr/local/etc/php/php.ini
+    #       - source: phpuploads
+    #         target: /usr/local/etc/php/conf.d/uploads.ini
+    #     volumes:
+    #         - ./www:/var/www/html:rw
+    #         - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    #     deploy:
+    #         mode: replicated
+    #         replicas: 1
+    #         resources:
+    #             limits:
+    #                 cpus: '0.50'
+    #                 memory: 100M
+    #             reservations:
+    #                 cpus: '0.25'
+    #                 memory: 50M
+    #         update_config:
+    #             order: start-first
+    #             parallelism: 1
+    #             delay: 10s
+    #         placement:
+    #             constraints:
+    #                 - node.labels.lnmp == true
+    #     logging:
+    #         driver: json-file
+    #         options:
+    #             max-file: '3'
+    #             max-size: 100m
+    #     # healthcheck:
+    #     #     test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+    #     #     interval: 10s
+    #     #     timeout: 5s
+    #     #     retries: 3
+
+    # php72:
+    #     image: php:7.2.5-fpm-alpine3.7
+    #     networks:
+    #         lnmp:
+    #             aliases:
+    #                 - php72
+    #     configs:
+    #       - source: php
+    #         target: /usr/local/etc/php/php.ini
+    #       - source: phpuploads
+    #         target: /usr/local/etc/php/conf.d/uploads.ini
+    #     volumes:
+    #         - ./www:/var/www/html:rw
+    #         - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    #     deploy:
+    #         mode: replicated
+    #         replicas: 1
+    #         resources:
+    #             limits:
+    #                 cpus: '0.50'
+    #                 memory: 100M
+    #             reservations:
+    #                 cpus: '0.25'
+    #                 memory: 50M
+    #         update_config:
+    #             order: start-first
+    #             parallelism: 1
+    #             delay: 10s
+    #         placement:
+    #             constraints:
+    #                 - node.labels.lnmp == true
+    #     logging:
+    #         driver: json-file
+    #         options:
+    #             max-file: '3'
+    #             max-size: 100m
+    #     # healthcheck:
+    #     #     test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+    #     #     interval: 10s
+    #     #     timeout: 5s
+    #     #     retries: 3
+
+
+    # asp20:
+    #     image: microsoft/aspnetcore:2.0
+    #     networks:
+    #         lnmp:
+    #             aliases:
+    #                 - asp20
+    #     volumes:
+    #         - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    #     deploy:
+    #         mode: replicated
+    #         replicas: 1
+    #         resources:
+    #             limits:
+    #                 cpus: '0.50'
+    #                 memory: 100M
+    #             reservations:
+    #                 cpus: '0.25'
+    #                 memory: 50M
+    #         update_config:
+    #             order: start-first
+    #             parallelism: 1
+    #             delay: 10s
+    #         placement:
+    #             constraints:
+    #                 - node.labels.lnmp == true
+    #     logging:
+    #         driver: json-file
+    #         options:
+    #             max-file: '3'
+    #             max-size: 100m
+    #     # healthcheck:
+    #     #     test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+    #     #     interval: 10s
+    #     #     timeout: 5s
+    #     #     retries: 3
+        
+configs:
+    mysql:
+        file: ./mysql/mysqld.cnf
+    ftpinitdb:
+        file: ./mysql/ftp.sql
+    nginx:
+        file: ./nginx/nginx.conf
+    nginx_defualt:
+        file: ./nginx/default.conf
+    php:
+        file: ./php/php.ini
+    phpuploads:
+        file: ./php/ext/uploads.ini
+
+networks:
+    virtualhost:
+        external: true
+    lnmp:
+        external: true

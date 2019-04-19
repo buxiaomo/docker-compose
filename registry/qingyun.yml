@@ -1,0 +1,43 @@
+version: 0.1
+log:
+  accesslog:
+    disabled: true
+  level: debug
+  formatter: text
+  fields:
+    service: registry
+    environment: staging
+loglevel: debug
+storage:
+  oss:
+    accesskeyid: XXMQXDYYXPRKDAAISNUO
+    accesskeysecret: MFutwJyzBnL5srqxM2rT8KyRNRWKoyhJpLl00w0C
+    region: pek3b
+    bucket: registry
+    endpoint: registry.pek3b.qingstor.com
+  delete:
+    enabled: true
+  redirect:
+    disable: false
+  cache:
+    blobdescriptor: redis
+#auth:
+#  token:
+#    realm: http://192.168.31.136:8080/auth
+#    service: "Docker registry"
+#    issuer: "Auth Service"
+#    rootcertbundle: /certs/hub.xmitd.com.crt
+http:
+  addr: :5000
+  headers:
+    X-Content-Type-Options: [nosniff]
+redis:
+  addr: redis:6379
+  db: 0
+  dialtimeout: 10ms
+  readtimeout: 10ms
+  writetimeout: 10ms
+  pool:
+    maxidle: 16
+    maxactive: 64
+    idletimeout: 300s

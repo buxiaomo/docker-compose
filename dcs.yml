@@ -1,0 +1,118 @@
+version: '3.4'
+services:
+    rabbitmq:
+        image: rabbitmq:3.7.3
+        hostname: rabbitmq
+        networks:
+            dcs:
+        environment:
+            - RABBITMQ_DEFAULT_USER=userdcs
+            - RABBITMQ_DEFAULT_PASS=userdcs
+        volumes:
+            - /var/lib/dcs/rabbitmq:/var/lib/rabbitmq:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.dcsbase == true
+    redis:
+        image: redis:4.0.6
+        hostname: redis
+        networks:
+            dcs:
+        volumes:
+            - /var/lib/dcs/redis:/data:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.dcsbase == true
+    postgres:
+        image: postgres:10.3
+        hostname: postgres
+        networks:
+            dcs:
+        environment:
+            - POSTGRES_USER=postgres
+            - POSTGRES_PASSWORD=postgres
+        volumes:
+            - /var/lib/dcs/postgresql:/var/lib/postgresql/data
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.dcsbase == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+    openldap:
+        image: dinkel/openldap
+        hostname: openldap
+        environment:
+            - SLAPD_PASSWORD=password
+            - SLAPD_DOMAIN=daocloud.io
+        volumes:
+            - /var/lib/dcs/ldap/etc:/etc/ldap:rw
+            - /var/lib/dcs/ldap/lib:/var/lib/ldap:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        networks:
+            dcs:
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.dcsbase == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+    phpldapadmin:
+        image: dinkel/phpldapadmin
+        hostname: phpldapadmin
+        environment:
+            - LDAP_SERVER_HOST=10.0.11.254
+        networks:
+            dcs:
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.dcsbase == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+networks:
+    dcs:
+        external:
+            name: "host"
+
+# mkdir -p /var/lib/dcs/ldap/etc /var/lib/dcs/ldap/lib /var/lib/dcs/postgresql /var/lib/dcs/rabbitmq /var/lib/dcs/redis 

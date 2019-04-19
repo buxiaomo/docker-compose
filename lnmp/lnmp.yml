@@ -1,0 +1,160 @@
+version: '3.4'
+services:
+    nginx:
+        image: nginx:1.13.8-alpine
+        ports:
+            - 80:80/tcp
+        networks:
+            lnmp:
+                aliases:
+                    - nginx
+        configs:
+          - source: nginx
+            target: /etc/nginx/nginx.conf
+          - source: timezome
+            target: /etc/localtime
+        volumes:
+            - ./www:/var/www/html:rw
+        deploy:
+            mode: replicated
+            replicas: 2
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        healthcheck:
+            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 80 || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    php:
+        image: daocloud.io/buxiaomo/php:7.2.8-fpm-alpine3.7.ext
+        networks:
+            lnmp:
+                aliases:
+                    - php
+        configs:
+          - source: php
+            target: /usr/local/etc/php/php.ini
+          - source: php-fpm
+            target: /usr/local/etc/php-fpm.d/www.conf
+          - source: timezome
+            target: /etc/localtime
+        volumes:
+            - ./www:/var/www/html:rw
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        healthcheck:
+            test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    redis:
+        image: redis:4.0.6
+        networks:
+            lnmp:
+                aliases:
+                    - redis
+        volumes:
+            - ./redis:/data:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        healthcheck:
+            test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 PING &> /dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    mysql:
+        image: mysql:5.7.20
+        hostname: mysql
+        networks:
+            lnmp:
+                aliases:
+                    - mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=dedecms
+            - MYSQL_USER=dedecms
+            - MYSQL_PASSWORD=Rohsur3U
+        configs:
+          - source: mysql
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+          - source: timezome
+            target: /etc/localtime
+        volumes:
+            - ./mysql:/var/lib/mysql
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        healthcheck:
+            test: ["CMD-SHELL", "mysql -uroot -proot -An -e 'show databases;' &> /dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    nginx:
+        file: ./conf/nginx.conf
+    php:
+        file: ./conf/php.ini
+    php-fpm:
+        file: ./conf/www.conf
+    mysql:
+        file: ./conf/mysqld.cnf
+    timezome:
+        file: /usr/share/zoneinfo/Asia/Shanghai
+networks:
+    lnmp:
+        external: true

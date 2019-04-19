@@ -1,0 +1,88 @@
+version: '3.4'
+services:
+    master:
+        image: daocloud.io/buxiaomo/splunk:7.0.2
+        ports:
+            - 8000:8000/tcp
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_CMD_1=edit cluster-config -mode master -replication_factor 2 -search_factor 2 -secret admin -cluster_label swarm -auth admin:changeme
+            - SPLUNK_CMD_2=set servername master -auth admin:changeme
+            - SPLUNK_CMD_3=restart
+        networks:
+            splunk:
+                aliases:
+                    - master
+        # volumes:
+        #     - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    indexer01:
+        image: daocloud.io/buxiaomo/splunk:7.0.2
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+            - SPLUNK_DEPLOYMENT_SERVER=master:8089
+            - SPLUNK_CMD_1=enable webserver -auth admin:changeme
+            - SPLUNK_CMD_2=edit cluster-config -mode slave -master_uri https://master:8089 -replication_port 9887 -secret admin -auth admin:changeme
+            - SPLUNK_CMD_3=set servername indexer01 -auth admin:changeme
+            - SPLUNK_CMD_4=restart
+        networks:
+            splunk:
+                aliases:
+                    - indexer01
+        # volumes:
+        #     - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    indexer02:
+        image: daocloud.io/buxiaomo/splunk:7.0.2
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+            - SPLUNK_DEPLOYMENT_SERVER=master:8089
+            - SPLUNK_CMD_1=enable webserver -auth admin:changeme
+            - SPLUNK_CMD_2=edit cluster-config -mode slave -master_uri https://master:8089 -replication_port 9887 -secret admin -auth admin:changeme
+            - SPLUNK_CMD_3=set servername indexer02 -auth admin:changeme
+            - SPLUNK_CMD_4=restart
+        networks:
+            splunk:
+                aliases:
+                    - indexer02
+        # volumes:
+        #     - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+networks:
+    splunk:
+        external: true

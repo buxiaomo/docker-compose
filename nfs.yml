@@ -1,0 +1,20 @@
+version: '3'
+services:
+    nfs-server:        
+        image: fuzzle/docker-nfs-server
+        privileged: true
+        networks:
+            nfs:
+        environment:
+            - NFS_EXPORT_DIR_1=/nfs
+            - NFS_EXPORT_DOMAIN_1=*
+            - NFS_EXPORT_OPTIONS_1=rw,sync,no_root_squash
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - /opt/nfsdata:/nfs
+networks:
+    nfs:
+        external:
+            name: "host"
+
+# yum install nfs-utils.x86_64 -y && mkdir /nfs && mount IP:/nfs /nfs && df -h | grep nfs

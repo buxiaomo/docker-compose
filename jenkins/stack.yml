@@ -1,0 +1,154 @@
+version: '3.6'
+services:
+    master:
+        image: ${JENKINS_MASTER_IMAGE:-daocloud.io/buxiaomo/jenkins:2.164.1}
+        ports:
+            - 8080:8080/tcp
+            - 50000:50000/tcp
+        networks:
+            jenkins:
+        depends_on:
+            - slave01
+            - slave02
+        environment:
+            - TZ=Asia/Shanghai
+            - LANG=zh_CN.UTF-8
+            # Jenkins 相关配置
+            - JENKINS_URL=${JENKINS_URL:-http://127.0.0.1:8080/}
+            - JENKINS_EMAIL=${JENKINS_EMAIL:-admin@localhost}
+            - JENKINS_USER=${JENKINS_USER:-admin}
+            - JENKINS_PASS=${JENKINS_PASS:-admin}
+            # GitLab 相关配置
+            - GITLAB_TOKEN=${GITLAB_TOKEN:-None}
+            - SONAR_TOKEN=${SONAR_TOKEN:-None}
+            # Jenkins 启动参数设置
+            - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Dfile.encoding=UTF-8 -Dhudson.model.DirectoryBrowserSupport.CSP=
+        volumes:
+            - master:/var/jenkins_home:rw
+            - maven_cache:/root/.m2
+            - gradle_cache:/root/.gradle:rw
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        configs:
+          - source: master
+            target: /usr/share/jenkins/ref/jenkins.yaml
+        healthcheck:
+            test: ["CMD-SHELL", "curl -s  http://127.0.0.1:8080 -o /dev/null || exit 1"]
+            interval: 30s
+            timeout: 5s
+            retries: 3
+        deploy:
+            replicas: 1
+            mode: replicated
+            resources:
+                limits:
+                    cpus: '4'
+                    memory: '8Gi'
+            #     reservations:
+            #         cpus: '4'
+            #         memory: '4Gi'
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.role == manager
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    slave01:
+        image: ${JENKINS_SLAVE_IMAGE:-daocloud.io/buxiaomo/jenkins-slave-ssh:2.164.1}
+        networks:
+            jenkins:
+        environment:
+            - LANG=zh_CN.UTF-8
+            - TZ=Asia/Shanghai
+            - JAVA_OPTS="-Dfile.encoding=UTF-8"
+        volumes:
+            - slave01:/var/jenkins_home
+            - maven_cache:/root/.m2
+            - gradle_cache:/root/.gradle:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        deploy:
+            replicas: 1
+            mode: replicated
+            resources:
+                limits:
+                    cpus: '4'
+                    memory: '8Gi'
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.role == manager
+        healthcheck:
+            test: ["CMD-SHELL", "nc -v -w 10 -z 127.0.0.1 22"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    slave02:
+        image: ${JENKINS_SLAVE_IMAGE:-daocloud.io/buxiaomo/jenkins-slave-ssh:2.164.1}
+        networks:
+            jenkins:
+        environment:
+            - LANG=zh_CN.UTF-8
+            - TZ=Asia/Shanghai
+            - JAVA_OPTS="-Dfile.encoding=UTF-8"
+        volumes:
+            - slave02:/var/jenkins_home
+            - maven_cache:/root/.m2
+            - gradle_cache:/root/.gradle:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        deploy:
+            replicas: 1
+            mode: replicated
+            resources:
+                limits:
+                    cpus: '4'
+                    memory: '8Gi'
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.role == manager
+        healthcheck:
+            test: ["CMD-SHELL", "nc -v -w 10 -z 127.0.0.1 22"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+volumes:
+    master: {}
+    slave01: {}
+    slave02: {}
+    gradle_cache: {}
+    maven_cache: {}
+
+configs:
+    master:
+        file: ./conf/jenkins.yml
+
+networks:
+    jenkins:
+        external: true

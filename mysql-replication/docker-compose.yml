@@ -1,0 +1,90 @@
+version: '3.4'
+services:
+    master:
+        image: mysql:5.7.20
+        networks:
+            mysql:
+                aliases:
+                    - master
+        environment:
+            - MYSQL_ROOT_PASSWORD=iech5Cah
+            - MYSQL_DATABASE=lnmp
+            - MYSQL_USER=lnmp
+            - MYSQL_PASSWORD=chooT1yu
+        configs:
+          - source: master
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+        volumes:
+            - ./master/data:/var/lib/mysql
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        # healthcheck:
+        #     test: ["CMD-SHELL", "mysql -uroot -piech5Cah -An -e 'show databases;' &> /dev/null || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    slave:
+        image: mysql:5.7.20
+        networks:
+            mysql:
+                aliases:
+                    - mysql-slave
+        environment:
+            - MYSQL_ROOT_PASSWORD=eacae0Im
+            - MYSQL_DATABASE=lnmp
+            - MYSQL_USER=lnmp
+            - MYSQL_PASSWORD=chooT1yu
+            - MYSQL_MASTER_HOST=master
+            - MYSQL_MASTER_PASSWORD=iech5Cah
+            - MYSQL_REPLICATION_USER=replication
+            - MYSQL_REPLICATION_PASSWORD=aibeeT6o
+        configs:
+          - source: slave
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+          - source: initslave
+            target: /docker-entrypoint-initdb.d/init.sh
+            mode: 0755
+        volumes:
+            - ./slave/data:/var/lib/mysql
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        # healthcheck:
+        #     test: ["CMD-SHELL", "mysql -uroot -peacae0Im -An -e 'show databases;' &> /dev/null || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    master:
+        file: ./master/mysqld.cnf
+    slave:
+        file: ./slave/mysqld.cnf
+    initslave:
+        file: ./slave/init.sh
+
+networks:
+    mysql:
+        external: true

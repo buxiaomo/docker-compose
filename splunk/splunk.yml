@@ -1,0 +1,29 @@
+version: '3.4'
+services:
+    server:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        hostname: server
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+        networks:
+            splunk:
+        volumes:
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+networks:
+    splunk:
+        external:
+            name: "host"

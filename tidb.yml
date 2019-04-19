@@ -1,0 +1,144 @@
+version: '2'
+services:
+    pd1:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: pd1
+        networks:
+            tidb:
+                aliases:
+                    - pd1
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        environment:
+            - TYPE=PD
+            - INITIAL_CLUSTER=pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380
+        # command: ping www.baidu.com
+        # command: pd-server --name="pd1" --data-dir="/data" --client-urls="http://0.0.0.0:2379" --advertise-client-urls="http://pd1:2379" --peer-urls="http://0.0.0.0:2380" --advertise-peer-urls="http://pd1:2380" --initial-cluster="pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380"
+    pd2:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: pd2
+        networks:
+            tidb:
+                aliases:
+                    - pd2
+        environment:
+            - TYPE=PD
+            - INITIAL_CLUSTER=pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: pd-server --name="pd2" --data-dir="/data" --client-urls="http://0.0.0.0:2379" --advertise-client-urls="http://pd2:2379" --peer-urls="http://0.0.0.0:2380" --advertise-peer-urls="http://pd2:2380" --initial-cluster="pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380"
+    pd3:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: pd3
+        networks:
+            tidb:
+                aliases:
+                    - pd3
+        environment:
+            - TYPE=PD
+            - INITIAL_CLUSTER=pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: pd-server --name="pd3" --data-dir="/data" --client-urls="http://0.0.0.0:2379" --advertise-client-urls="http://pd3:2379" --peer-urls="http://0.0.0.0:2380" --advertise-peer-urls="http://pd3:2380" --initial-cluster="pd1=http://pd1:2380,pd2=http://pd2:2380,pd3=http://pd3:2380"
+    tikv1:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: tikv1
+        networks:
+            tidb:
+                aliases:
+                    - tikv1
+        environment:
+            - TYPE=TIKV
+            - PD=pd1:2379,pd2:2379,pd3:2379
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: tikv-server --addr="0.0.0.0:20160" --advertise-addr="tikv1:20160" --data-dir="/data" --pd="pd1:2379,pd2:2379,pd3:2379"
+    tikv2:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: tikv2
+        networks:
+            tidb:
+                aliases:
+                    - tikv2
+        environment:
+            - TYPE=TIKV
+            - PD=pd1:2379,pd2:2379,pd3:2379
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: tikv-server --addr="0.0.0.0:20160" --advertise-addr="tikv2:20160" --data-dir="/data" --pd="pd1:2379,pd2:2379,pd3:2379"
+    tikv3:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: tikv3
+        networks:
+            tidb:
+                aliases:
+                    - tikv3
+        environment:
+            - TYPE=TIKV
+            - PD=pd1:2379,pd2:2379,pd3:2379
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: tikv-server --addr="0.0.0.0:20160" --advertise-addr="tikv3:20160" --data-dir="/data" --pd="pd1:2379,pd2:2379,pd3:2379"
+    tidb1:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: tidb1
+        networks:
+            tidb:
+                aliases:
+                    - tidb1
+        environment:
+            - TYPE=TIDB
+            - PD=pd1:2379,pd2:2379,pd3:2379
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: tidb-server --store=tikv --path="pd1:2379,pd2:2379,pd3:2379" -lease 1 -P 3306
+    tidb2:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: tidb2
+        networks:
+            tidb:
+                aliases:
+                    - tidb2
+        environment:
+            - TYPE=TIDB
+            - PD=pd1:2379,pd2:2379,pd3:2379
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: tidb-server --store=tikv --path="pd1:2379,pd2:2379,pd3:2379" -lease 1 -P 3306
+    tidb3:
+        image: daocloud.io/buxiaomo/tidb:latest
+        hostname: tidb3
+        networks:
+            tidb:
+                aliases:
+                    - tidb3
+        environment:
+            - TYPE=TIDB
+            - PD=pd1:2379,pd2:2379,pd3:2379
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+        # command: ping www.baidu.com
+        # command: tidb-server --store=tikv --path="pd1:2379,pd2:2379,pd3:2379" -lease 1 -P 3306
+    nginx:
+        image: daocloud.io/buxiaomo/tidb-nginx:latest
+        hostname: nginx
+        networks:
+            tidb:
+                aliases:
+                    - nginx
+        environment:
+            - PD_CLUSTER=tidb1:4000,tidb2:4000,tidb3:4000
+        ports:
+            - 3306:3306/tcp
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+networks:
+    tidb:
+        external: true

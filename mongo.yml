@@ -1,0 +1,31 @@
+version: '2'
+services:
+    master:
+        image: mongo:3.6.0
+        hostname: master
+        ports:
+            - 27017/tcp
+        volumes:
+            - /mongo/01/db:/data/db
+            - /mongo/01/configdb:/data/configdb
+        networks:
+            mongodb:
+                aliases:
+                    - master
+        command: mongod –dbpath /data/db –master
+    slave:
+        image: mongo:3.6.0
+        hostname: slave
+        ports:
+            - 27017/tcp
+        volumes:
+            - /mongo/02/db:/data/db
+            - /mongo/02/configdb:/data/configdb
+        networks:
+            mongodb:
+                aliases:
+                    - slave
+        command: mongod –dbpath /data/db –slave –source master:27017
+networks:
+    mongodb:
+        external: true

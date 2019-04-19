@@ -1,0 +1,129 @@
+version: '3.4'
+services:
+    minio1:
+        image: minio/minio:RELEASE.2018-07-23T18-34-49Z
+        command: server http://minio1:9000/export http://minio2:9000/export http://minio3:9000/export http://minio4:9000/export 
+        ports:
+            - "9001:9000"
+        networks:
+            minio_distributed:
+        volumes:
+            - /mnt/nfs/miniodata1:/export
+        environment:
+            - MINIO_ACCESS_KEY=LTAIG6PsqCGSEY9D
+            - MINIO_SECRET_KEY=umyGkKjWOr9d3FdoOThHeCD9c3jxr1
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.minio1 == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    minio2:
+        image: minio/minio:RELEASE.2018-07-23T18-34-49Z
+        command: server http://minio1:9000/export http://minio2:9000/export http://minio3:9000/export http://minio4:9000/export 
+        ports:
+            - "9002:9000"
+        networks:
+            minio_distributed:
+        volumes:
+            - /mnt/nfs/miniodata2:/export
+        environment:
+            - MINIO_ACCESS_KEY=LTAIG6PsqCGSEY9D
+            - MINIO_SECRET_KEY=umyGkKjWOr9d3FdoOThHeCD9c3jxr1
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.minio2 == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    minio3:
+        image: minio/minio:RELEASE.2018-07-23T18-34-49Z
+        command: server http://minio1:9000/export http://minio2:9000/export http://minio3:9000/export http://minio4:9000/export 
+        ports:
+            - "9003:9000"
+        networks:
+            minio_distributed:
+        volumes:
+            - /mnt/nfs/miniodata3:/export
+        environment:
+            - MINIO_ACCESS_KEY=LTAIG6PsqCGSEY9D
+            - MINIO_SECRET_KEY=umyGkKjWOr9d3FdoOThHeCD9c3jxr1
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.minio3 == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    minio4:
+        image: minio/minio:RELEASE.2018-07-23T18-34-49Z
+        command: server http://minio1:9000/export http://minio2:9000/export http://minio3:9000/export http://minio4:9000/export 
+        ports:
+            - "9004:9000"
+        networks:
+            minio_distributed:
+        volumes:
+            - /mnt/nfs/miniodata4:/export
+        environment:
+            - MINIO_ACCESS_KEY=LTAIG6PsqCGSEY9D
+            - MINIO_SECRET_KEY=umyGkKjWOr9d3FdoOThHeCD9c3jxr1
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.minio4 == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+networks:
+    minio_distributed:
+        driver: overlay
+
+# mc config host add test http://10.0.3.11:9000 CA436NH8GXAC086GXFHO 'EIhM5gp68Ri/2Pqq6LIKv7pz8QofVonIAcuj7q45' S3v4
+# mc --debug mb test/docker
+
+# mc mb --region ch-docker-1 test/xiaomo
+
+# mc cp a test/xiaomo
+
+
+# mc policy test/docker
+
+# mc policy public test/docker

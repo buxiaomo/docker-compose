@@ -1,0 +1,16 @@
+version: '2'
+services:
+    registry:
+        image: registry:2.6.1
+        hostname: registry
+        ports:
+            - 80:5000/tcp
+        networks:
+            registry:
+                aliases:
+                    - registry
+        volumes:
+            - /Users/momo/registry:/var/lib/registry:rw
+networks:
+    registry:
+        external: true

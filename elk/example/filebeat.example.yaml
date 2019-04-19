@@ -1,0 +1,41 @@
+filebeat.prospectors:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/nginx/access.log
+output.elasticsearch:
+  hosts: ["localhost:9200"]
+  protocol: "https"
+  username: "elastic"
+  password: "changeme"
+  hosts: ["localhost:5044"]
+  ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+  ssl.certificate: "/etc/pki/client/cert.pem"
+  ssl.key: "/etc/pki/client/cert.key"
+
+# filebeat.config.modules:
+#   path: ${path.config}/modules.d/*.yml
+#   reload.enabled: false
+# setup.template.settings:
+#   index.number_of_shards: 3
+# setup.kibana:
+#   #host: "localhost:5601"
+# filebeat.inputs:
+# - type: log
+#   enabled: false
+#   paths:
+#     - /var/log/nginx/access.log
+# output.redis:
+#    hosts: ["127.0.0.1"]
+#    port: 6379
+#    password: "eCha4Sei"
+#    key: "logstash-nginx"
+# # output.elasticsearch:
+#   #hosts: ["localhost:9200"]
+#   #protocol: "https"
+#   #username: "elastic"
+#   #password: "changeme"
+#   #hosts: ["localhost:5044"]
+#   #ssl.certificate_authorities: ["/etc/pki/root/ca.pem"]
+#   #ssl.certificate: "/etc/pki/client/cert.pem"
+#   #ssl.key: "/etc/pki/client/cert.key"

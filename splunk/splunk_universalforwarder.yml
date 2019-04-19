@@ -1,0 +1,43 @@
+version: '3.4'
+services:
+    uf:
+        image: daocloud.io/buxiaomo/universalforwarder:7.0.0
+        networks:
+            splunk:
+                aliases:
+                    - universalforwarder
+        volumes:
+            - /opt/universalforwarder/etc:/opt/splunk/etc
+            - /opt/universalforwarder/var:/opt/splunk/var
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_DEPLOYMENT_SERVER=splunkserver:8089
+            - SPLUNK_FORWARD_SERVER_1=indexer01:9997
+            - SPLUNK_FORWARD_SERVER_2=indexer02:9997
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            restart_policy:
+                condition: any
+            resources:
+                limits:
+                    cpus: '0.1'
+                    memory: 100M
+                reservations:
+                    cpus: '0.05'
+                    memory: 20M
+            placement:
+                constraints:
+                    - node.hostname == Docker-Swarm-M01
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+networks:
+    splunk:
+        external: true

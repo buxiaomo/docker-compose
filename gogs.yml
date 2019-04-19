@@ -1,0 +1,29 @@
+version: '2'
+services:
+    gogs:
+        image: gogs/gogs:latest
+        ports:
+            - 22:22/tcp
+            - 80:3000/tcp
+        volumes:
+            - /docker/gogs/gogs:/data
+        networks:
+            gogs:
+                aliases:
+                    - gogs
+    mysql:
+        image: mysql:5.7.18
+        volumes:
+            - /docker/gogs/mysql:/var/lib/mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=gogs
+            - MYSQL_USER=gogs
+            - MYSQL_PASSWORD=gogs
+        networks:
+            gogs:
+                aliases:
+                    - mysql
+networks:
+    gogs:
+        external: true

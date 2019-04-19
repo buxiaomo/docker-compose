@@ -1,0 +1,24 @@
+version: 0.1
+log:
+  fields:
+    service: registry
+http:
+  addr: :5000
+storage:
+  cache:
+    layerinfo: inmemory
+  s3:
+    accesskey: BR7F96JG3FWWKPSO7GQB
+    secretkey: drHhl1rpsfBdxOEXQdUIw2uLaTsQqZElAFozNdGw
+    region: us-east-1
+    regionendpoint: http://minio:9000/
+    bucket: docker-registry
+    encrypt: false
+    secure: true
+    v4auth: true
+    chunksize: 5242880
+    rootdirectory: /
+  delete:
+    enabled: true
+  redirect:
+    disable: false

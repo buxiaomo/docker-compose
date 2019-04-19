@@ -1,0 +1,1 @@
+存放Redis Master数据目录

@@ -1,0 +1,46 @@
+version: '3.4'
+services:
+    registry:
+        image: registry:2.6.1
+        hostname: registry
+        ports:
+            - 443:5000/tcp
+        networks:
+            registry:
+                aliases:
+                    - registry
+        configs:
+          - source: TLS_KEY
+            target: /certs/gcr.io.key
+          - source: TLS_CRT
+            target: /usr/local/etc/php-fpm.d/www.conf
+        volumes:
+            - /var/lib/registry:/var/lib/registry:rw
+            - ./certs:/certs
+        environment:
+            - REGISTRY_HTTP_TLS_KEY=/certs/gcr.io.key
+            - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/gcr.io.crt
+networks:
+    registry:
+        external: true
+
+# Registry主机
+
+# openssl genrsa -out ./hub.xmitd.com.pem 4096
+
+# openssl req -new -x509 -key ./hub.xmitd.com.pem \
+# -out hub.xmitd.com.crt -days 3650 -subj "/C=CN/ST=HB/L=WH/O=Mo/OU=Me/CN=hub.xmitd.com/emailAddress=95112082@qq.com"
+
+# Client主机
+# mkdir -p /etc/docker/certs.d/hub.xmitd.com
+# /home/certs/hub.xmitd.com.crt是registry主机生成的
+# cp /home/certs/hub.xmitd.com.crt /etc/docker/certs.d/hub.xmitd.com/
+
+# openssl req -newkey rsa:4096 \
+# -nodes -sha256 -keyout hub.xmitd.com.key \
+# -x509 -days 365 -out hub.xmitd.com.crt \
+# -subj "/C=CN/ST=HB/L=WH/O=Mo/OU=Me/CN=hub.xmitd.com/emailAddress=95112082@qq.com"
+# Client主机
+# mkdir -p /etc/docker/certs.d/hub.xmitd.com
+# /home/certs/hub.xmitd.com.crt是registry主机生成的
+# cp /home/certs/hub.xmitd.com.crt /etc/docker/certs.d/hub.xmitd.com/

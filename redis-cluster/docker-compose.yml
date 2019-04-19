@@ -1,0 +1,97 @@
+version: '3.4'
+services:
+    haproxy:
+        image: haproxy:1.8.3
+        hostname: redis-haproxy
+        ports:
+            - 6379:6379/tcp
+        networks:
+            redis:
+                aliases:
+                    - redis-haproxy
+        volumes:
+            - ./redis-haproxy:/usr/local/etc/haproxy:ro
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.redis == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    master:
+        image: redis:4.0.6
+        hostname: redis-master
+        networks:
+            redis:
+                aliases:
+                    - redis-master
+        volumes:
+            - ./redis-master:/data:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.redis == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    slave:
+        image: redis:4.0.6
+        hostname: redis-slave
+        command: redis-server --slaveof redis-master 6379
+        networks:
+            redis:
+                aliases:
+                    - redis-slave
+        volumes:
+            - ./redis-slave:/data:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.redis == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    sentinel:
+        image: redis:4.0.6
+        hostname: redis-sentinel
+        command: redis-sentinel /etc/redis/sentinel.conf --sentinel
+        networks:
+            redis:
+                aliases:
+                    - redis-sentinel
+        volumes:
+            - ./redis-sentinel/sentinel.conf:/etc/redis/sentinel.conf:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.redis == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+networks:
+    redis:
+        external: true

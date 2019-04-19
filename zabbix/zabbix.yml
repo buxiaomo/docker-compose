@@ -1,0 +1,141 @@
+version: '3.4'
+services:
+    server:
+        image: zabbix/zabbix-server-mysql:ubuntu-3.4.4
+        hostname: server
+        stop_grace_period: 30s
+        user: root
+        networks:
+            zabbix:
+                aliases:
+                    - server
+        environment:
+            - DB_SERVER_HOST=mysql
+            - DB_SERVER_PORT=3306
+            - MYSQL_USER=zabbix
+            - MYSQL_PASSWORD=zabbix
+            - MYSQL_DATABASE=zabbix
+            - ZBX_DEBUGLEVEL=3
+        ports:
+            - "10051:10051"
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+            - ./alertscripts:/usr/lib/zabbix/alertscripts:ro
+            - ./externalscripts:/usr/lib/zabbix/externalscripts:ro
+            - ./modules:/var/lib/zabbix/modules:ro
+            - ./enc:/var/lib/zabbix/enc:ro
+            - ./ssh_keys:/var/lib/zabbix/ssh_keys:ro
+            - ./mibs:/var/lib/zabbix/mibs:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.70'
+                    memory: 1G
+                reservations:
+                    cpus: '0.5'
+                    memory: 512M
+            placement:
+                constraints:
+                    - node.labels.zabbix == true
+        sysctls:
+            - net.ipv4.ip_local_port_range=1024 65000
+            - net.ipv4.conf.all.accept_redirects=0
+            - net.ipv4.conf.all.secure_redirects=0
+            - net.ipv4.conf.all.send_redirects=0
+        ulimits:
+            nproc: 65535
+            nofile:
+                soft: 20000
+                hard: 40000
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    web:
+        image: zabbix/zabbix-web-nginx-mysql:ubuntu-3.4.4
+        hostname: web
+        networks:
+            zabbix:
+                aliases:
+                    - web
+        environment:
+            - ZBX_SERVER_HOST=server
+            - ZBX_SERVER_PORT=10051
+            - DB_SERVER_HOST=mysql
+            - DB_SERVER_PORT=3306
+            - MYSQL_USER=zabbix
+            - MYSQL_PASSWORD=zabbix
+            - MYSQL_DATABASE=zabbix
+            - PHP_TZ=Asia/Shanghai
+            - ZBX_SERVER_NAME=zabbix server
+            - ZBX_MAXEXECUTIONTIME=300
+            - ZBX_MEMORYLIMIT=128M
+            - ZBX_POSTMAXSIZE=16M
+            - ZBX_UPLOADMAXFILESIZE=2M
+            - ZBX_MAXINPUTTIME=300
+        ports:
+            - 3007:80/tcp
+            - 3008:443/tcp
+        volumes:
+            - /etc/localtime:/etc/localtime:ro
+            - /etc/timezone:/etc/timezone:ro
+            - ./alertscripts:/usr/lib/zabbix/alertscripts:rw
+            - ./externalscripts:/usr/lib/zabbix/externalscripts:rw
+            - ./modules:/var/lib/zabbix/modules:rw
+            - ./enc:/var/lib/zabbix/enc:rw
+            - ./ssh_keys:/var/lib/zabbix/ssh_keys:rw
+            - ./mibs:/var/lib/zabbix/mibs:rw
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.zabbix == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    mysql:
+        image: mysql:5.7.20
+        hostname: mysql
+        networks:
+            zabbix:
+                aliases:
+                    - mysql
+        configs:
+          - source: mysql
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_USER=zabbix
+            - MYSQL_PASSWORD=zabbix
+            - MYSQL_DATABASE=zabbix
+        volumes:
+            - ./mysql/data:/var/lib/mysql:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            placement:
+                constraints:
+                    - node.labels.zabbix == true
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    mysql:
+        file: ./mysql/mysqld.cnf
+
+networks:
+    zabbix:
+        external: true

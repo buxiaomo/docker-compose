@@ -1,0 +1,165 @@
+version: '3.4'
+services:
+    searchead01:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+            - SPLUNK_DEPLOYMENT_SERVER=10.211.55.35:8089
+            - SPLUNK_CMD_1=set servername searchead01 -auth admin:changeme
+            - SPLUNK_CMD_2=restart
+        networks:
+            splunk:
+        volumes:
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 0
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.splunk == searchead01
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    master:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+            - SPLUNK_CMD_1=edit cluster-config -mode master -replication_factor 2 -search_factor 2 -secret admin -cluster_label swarm -auth admin:changeme
+            - SPLUNK_CMD_2=set servername master -auth admin:changeme
+            - SPLUNK_CMD_3=add licenses /licenses/oem-tail-5-22.lic
+            - SPLUNK_CMD_4=restart
+        networks:
+            splunk:
+        volumes:
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+            - /opt/splunk/licenses:/licenses:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.splunk == master
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    indexer01:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+            - SPLUNK_DEPLOYMENT_SERVER=10.211.55.35:8089
+            - SPLUNK_CMD_1=enable webserver -auth admin:changeme
+            - SPLUNK_CMD_2=edit cluster-config -mode slave -master_uri https://10.211.55.33:8089 -replication_port 9887 -secret admin -auth admin:changeme
+            - SPLUNK_CMD_3=set servername indexer01 -auth admin:changeme
+            - SPLUNK_CMD_4=edit licenser-localslave -master_uri 'https://10.211.55.33:8089' -auth admin:changeme
+            - SPLUNK_CMD_5=restart
+        networks:
+            splunk:
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+        deploy:
+            mode: replicated
+            replicas: 0
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.splunk == indexer01
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    indexer02:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_LISTEN=9997
+            - SPLUNK_DEPLOYMENT_SERVER=10.211.55.35:8089
+            - SPLUNK_CMD_1=enable webserver -auth admin:changeme
+            - SPLUNK_CMD_2=edit cluster-config -mode slave -master_uri https://10.211.55.33:8089 -replication_port 9887 -secret admin -auth admin:changeme
+            - SPLUNK_CMD_3=set servername indexer02 -auth admin:changeme
+            - SPLUNK_CMD_4=edit licenser-localslave -master_uri 'https://10.211.55.33:8089'
+            - SPLUNK_CMD_5=restart
+        networks:
+            splunk:
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+        deploy:
+            mode: replicated
+            replicas: 0
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.splunk == indexer02
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    deployment:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_CMD_1=set servername deployment -auth admin:changeme
+            - SPLUNK_CMD_2=restart
+        networks:
+            splunk:
+        volumes:
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 0
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.splunk == deployment
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+networks:
+    splunk:
+        external:
+            name: "host"
+
+# docker stack deploy -c splunk_cluster.yml splunk
+
+# When splunk server initialization is complete run the following command to start index:
+# docker service scale splunk_indexer01=1 splunk_indexer02=1 -d
+
+# Run the following command to start universalforwarder after index initialization is completed
+# docker service scale splunk_forward-monitor-docker=1 -d

@@ -1,0 +1,98 @@
+version: '3.4'
+services:
+    etcd01:
+        image: daocloud.io/daocloud/etcd:v3.2.9
+        hostname: etcd01
+        networks:
+            etcd:
+                aliases:
+                    - etcd01
+        volumes:
+            - /mnt/nfs/etcd/etcd01:/etcd-data:rw
+        environment:
+            - ETCD_NAME="etcd-01"
+            - ETCD_DATA_DIR="/etcd-data"
+            - ETCD_ADVERTISE_CLIENT_URLS="http://etcd01:22379"
+            - ETCD_LISTEN_PEER_URLS="http://0.0.0.0:22380"
+            - ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+            - ETCD_INITIAL_ADVERTISE_PEER_URLS="http://etcd01:22380"
+            - ETCD_INITIAL_CLUSTER="etcd-01=http://etcd01:22380,etcd-02=http://etcd02:22380,etcd-03=http://etcd03:22380"
+            - ETCD_INITIAL_CLUSTER_STATE="new"
+            - ETCD_INITIAL_CLUSTER_TOKEN="admin"
+            - ETCD_AUTO_COMPACTION_RETENTION="3"
+            - ETCD_QUOTA_BACKEND_BYTES="8589934592"
+            - ETCD_SNAPSHOT_COUNT="5000"
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.role == worker
+    etcd02:
+        image: daocloud.io/daocloud/etcd:v3.2.9
+        hostname: etcd02
+        networks:
+            etcd:
+                aliases:
+                    - etcd02
+        volumes:
+            - /mnt/nfs/etcd/etcd02:/etcd-data:rw
+        environment:
+            - ETCD_NAME="etcd-02"
+            - ETCD_DATA_DIR="/etcd-data"
+            - ETCD_ADVERTISE_CLIENT_URLS="http://0.0.0.0:22379"
+            - ETCD_LISTEN_PEER_URLS="http://0.0.0.0:22380"
+            - ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+            - ETCD_INITIAL_ADVERTISE_PEER_URLS="http://etcd02:22380"
+            - ETCD_INITIAL_CLUSTER="etcd-01=http://etcd01:22380,etcd-02=http://etcd02:22380,etcd-03=http://etcd03:22380"
+            - ETCD_INITIAL_CLUSTER_STATE="new"
+            - ETCD_INITIAL_CLUSTER_TOKEN="admin"
+            - ETCD_AUTO_COMPACTION_RETENTION="3"
+            - ETCD_QUOTA_BACKEND_BYTES="8589934592"
+            - ETCD_SNAPSHOT_COUNT="5000"
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.role == worker
+    etcd03:
+        image: daocloud.io/daocloud/etcd:v3.2.9
+        hostname: etcd03
+        networks:
+            etcd:
+                aliases:
+                    - etcd03
+        volumes:
+            - /mnt/nfs/etcd/etcd03:/etcd-data:rw
+        environment:
+            - ETCD_NAME="etcd-03"
+            - ETCD_DATA_DIR="/etcd-data"
+            - ETCD_ADVERTISE_CLIENT_URLS="http://etcd03:22379"
+            - ETCD_LISTEN_PEER_URLS="http://0.0.0.0:22380"
+            - ETCD_LISTEN_CLIENT_URLS="http://0.0.0.0:2379"
+            - ETCD_INITIAL_ADVERTISE_PEER_URLS="http://etcd03:22380"
+            - ETCD_INITIAL_CLUSTER="etcd-01=http://etcd01:22380,etcd-02=http://etcd02:22380,etcd-03=http://etcd03:22380"
+            - ETCD_INITIAL_CLUSTER_STATE="new"
+            - ETCD_INITIAL_CLUSTER_TOKEN="admin"
+            - ETCD_AUTO_COMPACTION_RETENTION="3"
+            - ETCD_QUOTA_BACKEND_BYTES="8589934592"
+            - ETCD_SNAPSHOT_COUNT="5000"
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.role == worker
+networks:
+    etcd:
+        external: true

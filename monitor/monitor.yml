@@ -1,0 +1,107 @@
+version: '3.4'
+services:
+    grafana:
+        image: grafana/grafana:5.2.2
+        ports:
+            - 3000:3000/tcp
+        networks:
+            monitor:
+                aliases:
+                    - grafana
+        volumes:
+            - ./grafana:/var/lib/grafana/plugins:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    prometheus:
+        image: prom/prometheus:v2.3.2
+        ports:
+            - 9090:9090/tcp
+        networks:
+            monitor:
+                aliases:
+                    - prometheus
+        configs:
+          - source: prometheus
+            target: /etc/prometheus/prometheus.yml     
+        volumes:
+            # - ./prometheus:/prometheus:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    cadvisor:
+        image: google/cadvisor:v0.30.2
+        ports:
+            - 8081:8080/tcp
+        networks:
+            monitor:
+                aliases:
+                    - cadvisor
+        volumes:
+            - /:/rootfs:ro
+            - /var/run:/var/run:rw
+            - /sys:/sys:ro
+            - /var/lib/docker/:/var/lib/docker:ro
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: global
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    prometheus:
+        file: ./conf/prometheus.yml
+
+networks:
+    monitor:
+        external: true

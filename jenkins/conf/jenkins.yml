@@ -1,0 +1,193 @@
+jenkins:
+  agentProtocols:
+  - "JNLP4-connect"
+  - "Ping"
+  crumbIssuer:
+    standard:
+      excludeClientIPFromCrumb: true
+  disableRememberMe: false
+  mode: NORMAL
+  # 节点配置
+  nodes:
+  - permanent:
+      name: "Slave01"
+      remoteFS: "/var/jenkins_home"
+      launcher:
+        sSHLauncher:
+          credentialsId: "SlaveAuth"
+          host: "slave01"
+          port: 22
+          launchTimeoutSeconds: 210
+          maxNumRetries: 10
+          retryWaitTime: 15
+  - permanent:
+      name: "Slave02"
+      remoteFS: "/var/jenkins_home"
+      launcher:
+        sSHLauncher:
+          credentialsId: "SlaveAuth"
+          host: "slave02"
+          port: 22
+          launchTimeoutSeconds: 210
+          maxNumRetries: 10
+          retryWaitTime: 15
+  numExecutors: 5
+  primaryView:
+    all:
+      name: "all"
+  quietPeriod: 0
+  remotingSecurity:
+    enabled: true
+  scmCheckoutRetryCount: 0
+  securityRealm:
+    local:
+      allowsSignup: false
+      enableCaptcha: false
+      users:
+      - id: ${JENKINS_USER:-admin}
+        password: ${JENKINS_PASS:-admin}
+    # ldap:
+    #   configurations:
+    #     - groupMembershipStrategy:
+    #         fromUserRecord:
+    #           attributeName: "memberOf"
+    #       inhibitInferRootDN: false
+    #       rootDN: "dc=acme,dc=org"
+    #       server: "ldaps://ldap.acme.org:1636"
+  authorizationStrategy:
+    globalMatrix:
+      grantedPermissions:
+      - "Overall/Read:admin"
+      - "Overall/Administer:admin"
+  slaveAgentPort: 50000
+  updateCenter:
+    sites:
+    - id: "default"
+      url: "https://updates.jenkins.io/update-center.json"
+  views:
+  - all:
+      name: "all"
+
+# 账号信息
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          # - basicSSHUserPrivateKey:
+          #     scope: GLOBAL
+          #     id: "basic-SSH"
+          #     username: "ssh-username"
+          #     passphrase: "" #Doable, but not recommended
+          #     description: "SSH Credentials for ssh-username"
+          #     privateKeySource:
+          #       directEntry:
+          #         privateKey: ${SSH_PRIVATE_KEY} #Load from Environment Variable
+          - usernamePassword:
+              scope: GLOBAL
+              id: "SlaveAuth"
+              username: "root"
+              password: "root"
+              description: "Username/Password Credentials for Slave SSH"
+          - usernamePassword:
+              scope: GLOBAL
+              id: "RegistryAuth"
+              username: "admin"
+              password: "admin123"
+              description: "Username/Password Credentials for Docker Registry"
+          - gitLabApiTokenImpl:
+              scope: GLOBAL
+              apiToken: ${GITLAB_TOKEN:-None}
+              id: "GitLabToken"
+          # - string:
+          #     scope: GLOBAL
+          #     id: "secret-text"
+          #     secret: ${SecretText} #Load from Environment Variable
+          #     description: "Secret Text"
+          # - aws:
+          #     scope: GLOBAL
+          #     id: "AWS"
+          #     accessKey: ${AWS_ACCESS_KEY_ID} #Load from Environment Variable
+          #     secretKey: ${AWS_SECRET_ACCESS_KEY} #Load from Environment Variable
+          #     description: "AWS Credentials"
+          # - file:
+          #     scope: GLOBAL
+          #     id: "secret-file"
+          #     fileName: "mysecretfile.txt"
+          #     secretBytes: ${SECRET_FILE_BYTES} # SECRET_FILE_BYTES="$(cat mysecretfile.txt | base64)"
+
+security:
+  remotingCLI:
+    enabled: false
+
+unclassified:
+  location:
+    adminAddress: ${JENKINS_EMAIL:-admin@localhost}
+    url: ${JENKINS_URL:-http://127.0.0.1:8080/}
+  gitLabConnectionConfig:
+    connections:
+    - apiTokenId: "GitLabToken"
+      clientBuilderId: "autodetect"
+      connectionTimeout: 10
+      ignoreCertificateErrors: true
+      name: "gitlab"
+      readTimeout: 10
+      url: "https://gitlab.com"
+  sonarGlobalConfiguration:
+    installations:
+    - name: "SonarQube"
+      serverAuthenticationToken: ${SONAR_TOKEN:-None}
+      serverUrl: "http://sonar.example.com"
+      triggers:
+        skipScmCause: false
+        skipUpstreamCause: false
+  bitbucketEndpointConfiguration:
+    endpoints:
+    - bitbucketCloudEndpoint:
+        enableCache: false
+        manageHooks: false
+        repositoriesCacheDuration: 0
+        teamCacheDuration: 0
+  # globalLibraries:
+  #   libraries:
+  #     - name: "Jenkins-Pipeline-Library"
+  #       allowVersionOverride: true
+  #       defaultVersion: "master"
+  #       includeInChangesets: true
+  #       retriever:
+  #         modernSCM:
+  #           scm:
+  #             git:
+  #               remote: "<a valid URL>"
+  #               credentialsId: "STB_BITBUCKET_PRIVATE_SSH_KEY"
+
+# 全局工具配置
+tool:
+  ant:
+    installations:
+    - home: "/usr/share/ant"
+      name: "Ant"
+  git:
+    installations:
+    - home: "/usr/bin/git"
+      name: "Default"
+  gradle:
+    installations:
+    - home: "/usr/local/gradle"
+      name: "gradle"
+  maven:
+    installations:
+    - home: "/usr/share/maven"
+      name: "maven"
+  jdk:
+    defaultProperties:
+    - installSource:
+        installers:
+        - jdkInstaller:
+            acceptLicense: false
+    installations:
+    - home: "/usr/lib/jvm/java-8-openjdk-amd64"
+      name: "java1.8"
+  sonarRunnerInstallation:
+    installations:
+    - home: "/usr/local/sonar-scanner-cli"
+      name: "SonarScanner"

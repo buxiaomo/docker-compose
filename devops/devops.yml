@@ -1,0 +1,126 @@
+version: '3.4'
+services:
+    gitlab:
+        # image: twang2218/gitlab-ce-zh:11.1
+        image: gitlab/gitlab-ce:11.2.3-ce.0
+        ports:
+            - 20001:80
+            - 20002:443
+            - 20003:22
+        networks:
+            devops:
+                aliases:
+                    - gitlab
+        environment:
+            - TZ='Asia/Shanghai'
+            - GITLAB_OMNIBUS_CONFIG="from_file('/omnibus_config.rb')"
+        configs:
+            - source: gitlab
+              target: /omnibus_config.rb
+        volumes:
+            - ./data/gitlab/etc:/etc/gitlab
+            - ./data/gitlab/opt:/var/opt/gitlab
+            - ./data/gitlab/log:/var/log/gitlab
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    jenkins:
+        image: daocloud.io/buxiaomo/jenkins:2.121.3
+        ports:
+            - 20004:8080/tcp
+        networks:
+            devops:
+                aliases:
+                    - jenkins
+        environment:
+            - LC_ALL=C.UTF-8
+        volumes:
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - ./data/jenkins:/var/jenkins:rw
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    jira:
+        image: cptactionhank/atlassian-jira:7.11.2
+        ports:
+            - 20005:8080/tcp
+        networks:
+            devops:
+                aliases:
+                    - server
+        volumes:
+            - ./data/jira/data:/var/atlassian/jira
+            - ./data/jira/logs:/opt/atlassian/jira/logs
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    mysql:
+        image: mysql:5.7.20
+        hostname: mysql
+        networks:
+            devops:
+                aliases:
+                    - mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=jira
+            - MYSQL_USER=jira
+            - MYSQL_PASSWORD=jira
+        configs:
+          - source: mysql
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+        volumes:
+            - ./data/mysql:/var/lib/mysql
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    mysql:
+        file: ./conf/mysqld.cnf
+    gitlab:
+        file: ./conf/omnibus_config.rb
+networks:
+    devops:
+        external: true

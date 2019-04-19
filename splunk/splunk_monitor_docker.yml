@@ -1,0 +1,40 @@
+version: '3.4'
+services:
+    docker:
+        image: outcoldsolutions/collectorfordocker:2.1.59.171210
+        networks:
+            splunk:
+                aliases:
+                    - monitor_docker
+        volumes:
+            - /sys/fs/cgroup:/rootfs/sys/fs/cgroup:ro
+            - /proc:/rootfs/proc:ro
+            - /var/log:/rootfs/var/log:ro
+            - /var/lib/docker/containers/:/var/lib/docker/containers/:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - collector_data:/data/
+        environment:
+            - COLLECTOR__SPLUNK_URL=output.splunk__url=http://demo.splunk.org.cn:8080/services/collector/event/1.0
+            - COLLECTOR__SPLUNK_TOKEN=output.splunk__token=8e55544d-1d35-492e-8060-abece5f66514
+            - COLLECTOR__SPLUNK_INSECURE=output.splunk__insecure=true
+        deploy:
+            mode: global
+            restart_policy:
+                condition: any
+            resources:
+                limits:
+                    cpus: '0.1'
+                    memory: 100M
+                reservations:
+                    cpus: '0.05'
+                    memory: 20M
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+networks:
+    splunk:
+        external: true
+volumes:
+    collector_data:

@@ -1,0 +1,23 @@
+version: '3.4'
+services:
+    registry:
+        image: registry:2.6.1
+        hostname: registry
+        ports:
+            - 80:5000/tcp
+        networks:
+            registry:
+                aliases:
+                    - registry
+        volumes:
+            - ./config.yml:/etc/docker/registry/config.yml
+            - ./certs:/certs
+            # - /var/lib/registry:/var/lib/registry:rw
+        environment:
+            - REGISTRY_HTTP_TLS_KEY=/certs/hub.xmitd.com.key
+            - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/hub.xmitd.com.crt
+networks:
+    registry:
+        external: true
+
+# openssl req -newkey rsa:4096 -nodes -sha256 -keyout domain.key -x509 -days 365 -out domain.crt

@@ -1,0 +1,68 @@
+version: '3.4'
+services:
+    ui:
+        image: daocloud.io/buxiaomo/dockerregistryui
+        ports:
+            - 10001:5000/tcp
+        environment:
+            - RegistryURL=hub.daoyun.rog.cn
+        networks:
+            registry:
+                aliases:
+                    - registryui
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+    registry:
+        image: registry:2.6.1
+        ports:
+            - 4004:5000/tcp
+        networks:
+            registry:
+                aliases:
+                    - registry
+        volumes:
+            - /Users/momo/docker/registry/config.yml:/etc/docker/registry/config.yml:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.role == userservice
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+    redis:
+        image: redis:4.0.6
+        hostname: redis
+        networks:
+            registry:
+                aliases:
+                    - redis
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+networks:
+    registry:
+        external: true

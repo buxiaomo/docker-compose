@@ -1,0 +1,57 @@
+    searchead01:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        hostname: searchead01
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_CMD_1=set servername searchead01 -auth admin:changeme
+            - SPLUNK_CMD_2=edit cluster-config -mode searchhead -master_uri https://10.3.236.31:8089 -secret admin
+            - SPLUNK_CMD_3=restart
+        networks:
+            splunk:
+        depends_on:
+            - splunkserver
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+        deploy:
+            mode: replicated
+            replicas: 0
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.hostname == splunk-searchead01
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+    deployment:
+        image: daocloud.io/buxiaomo/splunk:7.0.0
+        hostname: deployment
+        environment:
+            - SPLUNK_START_ARGS=--accept-license --answer-yes
+            - SPLUNK_ENABLE_DEPLOY_SERVER=true
+            - SPLUNK_DEPLOYMENT_SERVER=10.3.236.31:8089
+            - SPLUNK_CMD_1=set servername deployment -auth admin:changeme
+            - SPLUNK_CMD_2=edit licenser-localslave -master_uri 'https://10.3.236.31:8089' -auth admin:changeme
+            - SPLUNK_CMD_3=restart
+        networks:
+            splunk:
+        depends_on:
+            - splunkserver
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+            - /opt/splunk/var:/opt/splunk/var:rw
+            - /opt/splunk/etc:/opt/splunk/etc:rw
+        deploy:
+            mode: replicated
+            replicas: 0
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.hostname == splunk-department

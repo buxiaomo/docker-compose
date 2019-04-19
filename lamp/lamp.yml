@@ -1,0 +1,81 @@
+version: '3.4'
+services:
+    php:
+        image: php:7.2.8-apache
+        ports:
+            - 10015:80/tcp
+        networks:
+            lamp:
+                aliases:
+                    - php
+        configs:
+          - source: php
+            target: /usr/local/etc/php/php.ini
+        volumes:
+            - ./www:/var/www/html:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    mysql:
+        image: mysql:5.7.20
+        hostname: mysql
+        networks:
+            lamp:
+                aliases:
+                    - mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=lamp
+            - MYSQL_USER=lamp
+            - MYSQL_PASSWORD=lamp
+        configs:
+          - source: mysql
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+        volumes:
+            - ./mysql/data:/var/lib/mysql
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                # order: start-first
+                parallelism: 1
+                delay: 10s
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    php:
+        file: ./php/php.ini
+    mysql:
+        file: ./mysql/mysqld.cnf
+
+networks:
+    lamp:
+        external: true

@@ -1,0 +1,86 @@
+version: '3.4'
+services:
+    filebeat:
+        image: docker.elastic.co/beats/filebeat:6.6.0
+        user: root
+        command: filebeat -e -strict.perms=false -E output.elasticsearch.hosts=["elasticsearch:9200"] 
+        networks:
+            elk:
+                aliases:
+                    - filebeat
+        configs:
+            - source: docker
+              target: /usr/share/filebeat/filebeat.yml
+        volumes:
+            - /var/lib/docker/containers:/var/lib/docker/containers:ro
+            - /var/run/docker.sock:/var/run/docker.sock:ro
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.elk == true
+        healthcheck:
+            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 80 -z &> /dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    eg-apache:
+        image: httpd:2.4
+        networks:
+            elk:
+                aliases:
+                    - apache
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            labels:
+                - co.elastic.logs/module=apache2
+                - co.elastic.logs/fileset.stdout=access
+                - co.elastic.logs/fileset.stderr=error
+                - co.elastic.metrics/module=apache
+                - co.elastic.metrics/metricsets=status
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.elk == true
+        healthcheck:
+            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 80 -z &> /dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    docker:
+        file: ./conf/filebeat.docker.yml
+
+networks:
+    elk:
+        external: true

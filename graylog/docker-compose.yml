@@ -1,0 +1,158 @@
+version: '3.4'
+services:
+    mongo:
+        image: mongo:4.0.1
+        networks:
+            graylog:
+                aliases:
+                    - mongo
+        configs:
+          - source: mongod
+            target: /etc/mongo/mongod.conf
+        volumes:
+            - ./mongo:/data/db:rw
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+                reservations:
+                    cpus: '0.25'
+                    memory: 50M
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+        # healthcheck:
+        #     test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 80 || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+    elasticsearch:
+        image: daocloud.io/buxiaomo/elasticsearch:6.2.4
+        command: elasticsearch -Des.cluster.name='graylog'
+        ports:
+            - 9200:9200/tcp
+            - 9300:9300/tcp
+        configs:
+            - source: elasticsearch
+              target: /usr/local/elasticsearch/config/elasticsearch.yml
+              uid: '1000'
+              gid: '1000'
+              mode: 0660
+        networks:
+            elk:
+                aliases:
+                    - elasticsearch
+        volumes:
+            - ./elasticsearch/data:/usr/local/elasticsearch/data
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl http://127.0.0.1:9200 &> /dev/null|| exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    graylog:
+        image: graylog2/server:2.1.1-1
+        hostname: mysql
+        networks:
+            lnmp:
+                aliases:
+                    - mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=lnmp
+            - MYSQL_USER=lnmp
+            - MYSQL_PASSWORD=lnmp
+        configs:
+          - source: mysql
+            target: /etc/mysql/mysql.conf.d/mysqld.cnf
+        volumes:
+            - ./mysql/data:/var/lib/mysql
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                # order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.lnmp == true
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin:4.7
+        hostname: phpmyadmin
+        ports:
+            - 3002:80/tcp
+        networks:
+            lnmp:
+                aliases:
+                    - phpmyadmin
+        environment:
+            - PMA_HOST=mysql
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: start-first
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.mysql == true
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl -f http://localhost:80/ || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+configs:
+    nginx:
+        file: ./nginx/nginx.conf
+    php:
+        file: ./php/php.ini
+    phpuploads:
+        file: ./php/ext/uploads.ini
+    mysql:
+        file: ./mysql/mysqld.cnf
+
+networks:
+    lnmp:
+        external: true

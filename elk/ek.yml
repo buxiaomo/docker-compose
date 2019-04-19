@@ -1,0 +1,202 @@
+version: '3.4'
+services:
+    nginx:
+        image: nginx:1.13.6-alpine
+        ports:
+            - 80:80/tcp
+        networks:
+            elk:
+                aliases:
+                    - nginx
+        configs:
+            - source: nginx
+              target: /etc/nginx/nginx.conf
+            - source: nginxdb
+              target: /etc/nginx/nginx.db
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            resources:
+                limits:
+                    cpus: '0.50'
+                    memory: 100M
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.elk == true
+        healthcheck:
+            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 80 -z &> /dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    kibana:
+        image: kibana:6.6.0
+        # ports:
+        #     - 5601:5601/tcp
+        networks:
+            elk:
+                aliases:
+                    - kibana
+        environment:
+            - SERVER_NAME=${SERVER_NAME:-kibana}
+            - ELASTICSEARCH_HOSTS=${ELASTICSEARCH_HOSTS:-http://elasticsearch:9200}
+        volumes:
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.elk == true
+        # healthcheck:
+        #     test: ["CMD-SHELL", "nc -w 1 127.0.0.1 5601 -z &> /dev/null || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    elasticsearch:
+        image: elasticsearch:6.6.0
+        ports:
+            - 9200:9200/tcp
+            - 9300:9300/tcp
+        configs:
+            - source: elasticsearch
+              target: /usr/share/elasticsearch/config/elasticsearch.yml
+        networks:
+            elk:
+                aliases:
+                    - elasticsearch
+        volumes:
+            - elasticsearch:/usr/share/elasticsearch/data
+            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                parallelism: 1
+                delay: 10s
+            placement:
+                constraints:
+                    - node.labels.elk == true
+        # healthcheck:
+        #     test: ["CMD-SHELL", "curl http://127.0.0.1:9200 &> /dev/null|| exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
+    # redis:
+    #     image: redis:4.0.6
+    #     command: redis-server /etc/redis.conf
+    #     ports:
+    #         - 6379:6379/tcp
+    #     networks:
+    #         elk:
+    #             aliases:
+    #                 - redis
+    #     configs:
+    #         - source: redis
+    #           target: /etc/redis.conf
+    #     volumes:
+    #         - redis:/data:rw
+    #         - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    #     deploy:
+    #         mode: replicated
+    #         replicas: 1
+    #         resources:
+    #             limits:
+    #                 cpus: '0.50'
+    #                 memory: 100M
+    #         update_config:
+    #             parallelism: 1
+    #             delay: 10s
+    #         placement:
+    #             constraints:
+    #                 - node.labels.elk == true
+    #     healthcheck:
+    #         test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 -a eCha4Sei PING &> /dev/null || exit 1"]
+    #         interval: 10s
+    #         timeout: 5s
+    #         retries: 3
+    #     logging:
+    #         driver: json-file
+    #         options:
+    #             max-file: '3'
+    #             max-size: 100m
+
+    # logstash:
+    #     image: daocloud.io/buxiaomo/logstash:6.2.4
+    #     command: /usr/local/logstash/bin/logstash -f /usr/local/logstash/config/logstash.conf
+    #     # ports:
+    #     #     - 5043:5043/tcp
+    #     networks:
+    #         elk:
+    #             aliases:
+    #                 - logstash
+    #     configs:
+    #         - source: logstash
+    #           target: /usr/local/logstash/config/logstash.conf
+    #           uid: '1000'
+    #           gid: '1000'
+    #           mode: 0660
+    #     volumes:
+    #         - logstash:/usr/local/logstash/data:rw
+    #         - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    #     deploy:
+    #         mode: replicated
+    #         replicas: 1
+    #         update_config:
+    #             parallelism: 1
+    #             delay: 10s
+    #         placement:
+    #             constraints:
+    #                 - node.labels.elk == true
+    #     logging:
+    #         driver: json-file
+    #         options:
+    #             max-file: '3'
+    #             max-size: 100m
+
+configs:
+    nginx:
+        file: ./conf/nginx.conf
+    nginxdb:
+        file: ./conf/nginx.db
+    elasticsearch:
+        file: ./conf/elasticsearch.yml
+    kibana:
+        file: ./conf/kibana.yml
+    # logstash:
+    #     file: ./conf/logstash.conf
+    # redis:
+    #     file: ./conf/redis.conf
+volumes:
+    elasticsearch: {}
+    # redis: {}
+    # logstash: {}
+
+networks:
+    elk:
+        external: true
