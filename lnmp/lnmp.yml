@@ -1,13 +1,11 @@
-version: '3.4'
+version: '3.6'
 services:
     nginx:
-        image: nginx:1.13.8-alpine
+        image: nginx:1.19.0-alpine
         ports:
             - 80:80/tcp
         networks:
             lnmp:
-                aliases:
-                    - nginx
         configs:
           - source: nginx
             target: /etc/nginx/nginx.conf
@@ -44,8 +42,6 @@ services:
         image: daocloud.io/buxiaomo/php:7.2.8-fpm-alpine3.7.ext
         networks:
             lnmp:
-                aliases:
-                    - php
         configs:
           - source: php
             target: /usr/local/etc/php/php.ini
@@ -70,7 +66,7 @@ services:
                 parallelism: 1
                 delay: 10s
         healthcheck:
-            test: ["CMD-SHELL", "curl -f http://localhost:9000/ || exit 1"]
+            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 9000 || exit 1"]
             interval: 10s
             timeout: 5s
             retries: 3
@@ -84,8 +80,6 @@ services:
         image: redis:4.0.6
         networks:
             lnmp:
-                aliases:
-                    - redis
         volumes:
             - ./redis:/data:rw
             - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
@@ -112,13 +106,11 @@ services:
         hostname: mysql
         networks:
             lnmp:
-                aliases:
-                    - mysql
         environment:
             - MYSQL_ROOT_PASSWORD=root
-            - MYSQL_DATABASE=dedecms
-            - MYSQL_USER=dedecms
-            - MYSQL_PASSWORD=Rohsur3U
+            - MYSQL_DATABASE=wordpress
+            - MYSQL_USER=wordpress
+            - MYSQL_PASSWORD=wordpress
         configs:
           - source: mysql
             target: /etc/mysql/mysql.conf.d/mysqld.cnf
@@ -128,7 +120,7 @@ services:
             - ./mysql:/var/lib/mysql
         deploy:
             mode: replicated
-            replicas: 1
+            replicas: 0
             update_config:
                 order: stop-first
                 parallelism: 1
@@ -157,4 +149,3 @@ configs:
         file: /usr/share/zoneinfo/Asia/Shanghai
 networks:
     lnmp:
-        external: true

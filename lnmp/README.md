@@ -44,4 +44,6 @@ docker stack rm lnmp
 ```
 docker network create lnmp
 docker-compose -f lnmp.yml up -d
+
+chown -R 82.100 .
 ```
