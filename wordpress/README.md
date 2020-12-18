@@ -17,5 +17,5 @@ docker-compose -f docker-compose.yml -p webname up -d
 ```shell
 mkdir -p ./www ./mysql/data
 docker  network create -d overlay wordpress
-docker stack deploy -c docker-compose-swarm.yml wp
+docker stack deploy -c stack.yml wordpress
 ```
