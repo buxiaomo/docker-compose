@@ -110,7 +110,7 @@ services:
                 aliases:
                     - phpmyadmin
         environment:
-            - PMA_HOST=mysql        
+            - PMA_HOST=mysql
         deploy:
             mode: replicated
             replicas: 1
@@ -122,6 +122,11 @@ services:
                 limits:
                     cpus: '0.50'
                     memory: 50M
+        healthcheck:
+            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 80 || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
         logging:
             driver: json-file
             options:
