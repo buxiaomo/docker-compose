@@ -23,9 +23,6 @@ services:
             update_config:
                 parallelism: 1
                 delay: 10s
-            placement:
-                constraints:
-                    - node.labels.wp == true
         logging:
             driver: json-file
             options:
@@ -55,14 +52,11 @@ services:
             replicas: 3
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 100M
+                    cpus: '2'
+                    memory: '1024G'
             update_config:
                 parallelism: 1
                 delay: 10s
-            placement:
-                constraints:
-                    - node.labels.wp == true
         logging:
             driver: json-file
             options:
@@ -90,14 +84,11 @@ services:
             replicas: 1
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 100M
+                    cpus: 4
+                    memory: 1G
             update_config:
                 parallelism: 1
                 delay: 10s
-            placement:
-                constraints:
-                    - node.labels.wp == true
         logging:
             driver: json-file
             options:
@@ -150,14 +141,11 @@ services:
             replicas: 2
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 5M
+                    cpus: 1
+                    memory: 200M
             update_config:
                 parallelism: 1
                 delay: 10s
-            placement:
-                constraints:
-                    - node.labels.wp == true
         logging:
             driver: json-file
             options:
@@ -178,14 +166,11 @@ services:
             replicas: 1
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 100M
+                    cpus: 1
+                    memory: 200M
             update_config:
                 parallelism: 1
                 delay: 10s
-            placement:
-                constraints:
-                    - node.labels.wp == true
         logging:
             driver: json-file
             options:
@@ -207,14 +192,11 @@ services:
             replicas: 1
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 100M
+                    cpus: 1
+                    memory: 200M
             update_config:
                 parallelism: 1
                 delay: 10s
-            placement:
-                constraints:
-                    - node.labels.wp == true
         logging:
             driver: json-file
             options:
@@ -237,8 +219,8 @@ services:
             replicas: 1
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 100M
+                    cpus: 1
+                    memory: 200M
             update_config:
                 parallelism: 1
                 delay: 10s
