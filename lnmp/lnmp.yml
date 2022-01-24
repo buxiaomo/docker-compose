@@ -15,7 +15,7 @@ services:
             - ./www:/var/www/html:rw
         deploy:
             mode: replicated
-            replicas: 2
+            replicas: 1
             resources:
                 limits:
                     cpus: '0.50'
@@ -56,11 +56,11 @@ services:
             replicas: 1
             resources:
                 limits:
-                    cpus: '0.50'
-                    memory: 100M
+                    cpus: '1'
+                    memory: 1G
                 reservations:
-                    cpus: '0.25'
-                    memory: 50M
+                    cpus: '0.5'
+                    memory: 100M
             update_config:
                 order: start-first
                 parallelism: 1
@@ -120,7 +120,7 @@ services:
             - ./mysql:/var/lib/mysql
         deploy:
             mode: replicated
-            replicas: 0
+            replicas: 1
             update_config:
                 order: stop-first
                 parallelism: 1

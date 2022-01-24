@@ -1,10 +1,14 @@
 [client]
+default-character-set = utf8mb4
 #password   = your_password
 port        = 3306
 socket      = /var/run/mysqld/mysqld.sock
 
 [mysqld]
 #bind-address	= 127.0.0.1
+character-set-server = utf8mb4
+collation-server = utf8mb4_unicode_ci
+init_connect = 'SET NAMES utf8mb4'
 symbolic-links=0
 port        = 3306
 socket		= /var/run/mysqld/mysqld.sock
@@ -81,6 +85,7 @@ max_allowed_packet = 16M
 
 [mysql]
 no-auto-rehash
+default-character-set=utf8mb4
 
 [myisamchk]
 key_buffer_size = 32M
