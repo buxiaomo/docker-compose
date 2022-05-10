@@ -12,7 +12,7 @@ services:
           - source: timezome
             target: /etc/localtime
         volumes:
-            - ./www:/var/www/html:rw
+            - ./data/www:/var/www/html:rw
         deploy:
             mode: replicated
             replicas: 1
@@ -50,7 +50,7 @@ services:
           - source: timezome
             target: /etc/localtime
         volumes:
-            - ./www:/var/www/html:rw
+            - ./data/www:/var/www/html:rw
         deploy:
             mode: replicated
             replicas: 1
@@ -81,7 +81,7 @@ services:
         networks:
             lnmp:
         volumes:
-            - ./redis:/data:rw
+            - ./data/redis:/data:rw
             - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
         healthcheck:
             test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 PING &> /dev/null || exit 1"]
@@ -108,16 +108,14 @@ services:
             lnmp:
         environment:
             - MYSQL_ROOT_PASSWORD=root
-            - MYSQL_DATABASE=wordpress
-            - MYSQL_USER=wordpress
-            - MYSQL_PASSWORD=wordpress
+            - MYSQL_DATABASE=demo
         configs:
           - source: mysql
             target: /etc/mysql/mysql.conf.d/mysqld.cnf
           - source: timezome
             target: /etc/localtime
         volumes:
-            - ./mysql:/var/lib/mysql
+            - ./data/mysql:/var/lib/mysql
         deploy:
             mode: replicated
             replicas: 1
