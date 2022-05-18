@@ -83,11 +83,11 @@ services:
         volumes:
             - ./data/redis:/data:rw
             - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
-        healthcheck:
-            test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 PING &> /dev/null || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
+        # healthcheck:
+        #     test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 PING &> /dev/null || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
         deploy:
             mode: replicated
             replicas: 1
@@ -127,11 +127,11 @@ services:
                 order: stop-first
                 parallelism: 1
                 delay: 10s
-        healthcheck:
-            test: ["CMD-SHELL", "mysql -uroot -proot -An -e 'show databases;' &> /dev/null || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
+        # healthcheck:
+        #     test: ["CMD-SHELL", "mysql -uroot -proot -An -e 'show databases;' &> /dev/null"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
         logging:
             driver: json-file
             options:
