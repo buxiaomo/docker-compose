@@ -104,11 +104,15 @@ services:
     mysql:
         image: mysql:5.7.20
         hostname: mysql
+        ports:
+            - 3306:3306/tcp
         networks:
             lnmp:
         environment:
             - MYSQL_ROOT_PASSWORD=root
             - MYSQL_DATABASE=demo
+            - MYSQL_USER=demo
+            - MYSQL_PASSWORD=demo
         configs:
           - source: mysql
             target: /etc/mysql/mysql.conf.d/mysqld.cnf
@@ -134,6 +138,36 @@ services:
                 max-file: '3'
                 max-size: 100m
 
+    phpmyadmin:
+        image: phpmyadmin:5.2.0-apache
+        hostname: phpmyadmin
+        ports:
+            - 81:80/tcp
+        networks:
+            lnmp:
+        environment:
+            - PMA_HOST=mysql
+        configs:
+          - source: timezome
+            target: /etc/localtime
+        deploy:
+            mode: replicated
+            replicas: 1
+            update_config:
+                order: stop-first
+                parallelism: 1
+                delay: 10s
+        healthcheck:
+            test: ["CMD-SHELL", "curl http://127.0.0.1 &> /dev/null || exit 1"]
+            interval: 10s
+            timeout: 5s
+            retries: 3
+        logging:
+            driver: json-file
+            options:
+                max-file: '3'
+                max-size: 100m
+
 configs:
     nginx:
         file: ./conf/nginx.conf
@@ -145,5 +179,6 @@ configs:
         file: ./conf/mysqld.cnf
     timezome:
         file: /usr/share/zoneinfo/Asia/Shanghai
+
 networks:
     lnmp:
