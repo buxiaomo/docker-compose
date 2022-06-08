@@ -1,181 +1,181 @@
-version: '3.6'
+version: "3.6"
 services:
-    nginx:
-        image: nginx:1.21.6-alpine
-        ports:
-            - 80:80/tcp
-        networks:
-            lnmp:
-        configs:
-          - source: nginx
-            target: /etc/nginx/nginx.conf
-          - source: timezome
-            target: /etc/localtime
-        volumes:
-            - ./data/www:/var/www/html:rw
-        deploy:
-            mode: replicated
-            replicas: 1
-            resources:
-                limits:
-                    cpus: '0.50'
-                    memory: 100M
-                reservations:
-                    cpus: '0.25'
-                    memory: 50M
-            update_config:
-                order: start-first
-                parallelism: 1
-                delay: 10s
-        healthcheck:
-            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 80 || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
-        logging:
-            driver: json-file
-            options:
-                max-file: '3'
-                max-size: 100m
+  nginx:
+    image: nginx:1.21.6-alpine
+    ports:
+      - 80:80/tcp
+    networks:
+      lnmp:
+    configs:
+      - source: nginx
+        target: /etc/nginx/nginx.conf
+      - source: timezome
+        target: /etc/localtime
+    volumes:
+      - ./data/www:/var/www/html:rw
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 100M
+        reservations:
+          cpus: "0.25"
+          memory: 50M
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 10s
+    healthcheck:
+      test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 80 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 100m
 
-    php:
-        image: buxiaomo/php:7.3.33-fpm
-        networks:
-            lnmp:
-        configs:
-          - source: php
-            target: /usr/local/etc/php/php.ini
-          - source: php-fpm
-            target: /usr/local/etc/php-fpm.d/www.conf
-          - source: timezome
-            target: /etc/localtime
-        volumes:
-            - ./data/www:/var/www/html:rw
-        deploy:
-            mode: replicated
-            replicas: 1
-            resources:
-                limits:
-                    cpus: '1'
-                    memory: 1G
-                reservations:
-                    cpus: '0.5'
-                    memory: 100M
-            update_config:
-                order: start-first
-                parallelism: 1
-                delay: 10s
-        # healthcheck:
-        #     test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 9000 || exit 1"]
-        #     interval: 10s
-        #     timeout: 5s
-        #     retries: 3
-        logging:
-            driver: json-file
-            options:
-                max-file: '3'
-                max-size: 100m
+  php:
+    image: buxiaomo/php:7.3.33-fpm
+    networks:
+      lnmp:
+    configs:
+      - source: php
+        target: /usr/local/etc/php/php.ini
+      - source: php-fpm
+        target: /usr/local/etc/php-fpm.d/www.conf
+      - source: timezome
+        target: /etc/localtime
+    volumes:
+      - ./data/www:/var/www/html:rw
+    deploy:
+      mode: replicated
+      replicas: 1
+      resources:
+        limits:
+          cpus: "1"
+          memory: 1G
+        reservations:
+          cpus: "0.5"
+          memory: 100M
+      update_config:
+        order: start-first
+        parallelism: 1
+        delay: 10s
+    # healthcheck:
+    #     test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 9000 || exit 1"]
+    #     interval: 10s
+    #     timeout: 5s
+    #     retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 100m
 
-    redis:
-        image: redis:6.2.7-alpine
-        networks:
-            lnmp:
-        volumes:
-            - ./data/redis:/data:rw
-            - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
-        # healthcheck:
-        #     test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 PING &> /dev/null || exit 1"]
-        #     interval: 10s
-        #     timeout: 5s
-        #     retries: 3
-        deploy:
-            mode: replicated
-            replicas: 1
-            update_config:
-                order: stop-first
-                parallelism: 1
-                delay: 10s
-        logging:
-            driver: json-file
-            options:
-                max-file: '3'
-                max-size: 100m
+  redis:
+    image: redis:6.2.7-alpine
+    networks:
+      lnmp:
+    volumes:
+      - ./data/redis:/data:rw
+      - /usr/share/zoneinfo/Asia/Shanghai:/etc/localtime:ro
+    # healthcheck:
+    #     test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 PING &> /dev/null || exit 1"]
+    #     interval: 10s
+    #     timeout: 5s
+    #     retries: 3
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        order: stop-first
+        parallelism: 1
+        delay: 10s
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 100m
 
-    mysql:
-        image: mysql:5.7.20
-        networks:
-            lnmp:
-        environment:
-            - MYSQL_ROOT_PASSWORD=root
-            - MYSQL_DATABASE=demo
-            - MYSQL_USER=demo
-            - MYSQL_PASSWORD=demo
-        configs:
-          - source: mysql
-            target: /etc/mysql/mysql.conf.d/mysqld.cnf
-          - source: timezome
-            target: /etc/localtime
-        volumes:
-            - ./data/mysql:/var/lib/mysql
-        deploy:
-            mode: replicated
-            replicas: 1
-            update_config:
-                order: stop-first
-                parallelism: 1
-                delay: 10s
-        # healthcheck:
-        #     test: ["CMD-SHELL", "mysql -uroot -proot -An -e 'show databases;' &> /dev/null"]
-        #     interval: 10s
-        #     timeout: 5s
-        #     retries: 3
-        logging:
-            driver: json-file
-            options:
-                max-file: '3'
-                max-size: 100m
+  mysql:
+    image: mysql:5.7.20
+    networks:
+      lnmp:
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=demo
+      - MYSQL_USER=demo
+      - MYSQL_PASSWORD=demo
+    configs:
+      - source: mysql
+        target: /etc/mysql/mysql.conf.d/mysqld.cnf
+      - source: timezome
+        target: /etc/localtime
+    volumes:
+      - ./data/mysql:/var/lib/mysql
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        order: stop-first
+        parallelism: 1
+        delay: 10s
+    # healthcheck:
+    #     test: ["CMD-SHELL", "mysql -uroot -proot -An -e 'show databases;' &> /dev/null"]
+    #     interval: 10s
+    #     timeout: 5s
+    #     retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 100m
 
-    phpmyadmin:
-        image: phpmyadmin:5.2.0-apache
-        hostname: phpmyadmin
-        ports:
-            - 81:80/tcp
-        networks:
-            lnmp:
-        environment:
-            - PMA_HOST=mysql
-        configs:
-          - source: timezome
-            target: /etc/localtime
-        deploy:
-            mode: replicated
-            replicas: 1
-            update_config:
-                order: stop-first
-                parallelism: 1
-                delay: 10s
-        healthcheck:
-            test: ["CMD-SHELL", "curl http://127.0.0.1 &> /dev/null || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
-        logging:
-            driver: json-file
-            options:
-                max-file: '3'
-                max-size: 100m
+  phpmyadmin:
+    image: phpmyadmin:5.2.0-apache
+    hostname: phpmyadmin
+    ports:
+      - 81:80/tcp
+    networks:
+      lnmp:
+    environment:
+      - PMA_HOST=mysql
+    configs:
+      - source: timezome
+        target: /etc/localtime
+    deploy:
+      mode: replicated
+      replicas: 1
+      update_config:
+        order: stop-first
+        parallelism: 1
+        delay: 10s
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://127.0.0.1 &> /dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 100m
 
 configs:
-    nginx:
-        file: ./conf/nginx.conf
-    php:
-        file: ./conf/php.ini
-    php-fpm:
-        file: ./conf/www.conf
-    mysql:
-        file: ./conf/mysqld.cnf
-    timezome:
-        file: /usr/share/zoneinfo/Asia/Shanghai
+  nginx:
+    file: ./conf/nginx.conf
+  php:
+    file: ./conf/php.ini
+  php-fpm:
+    file: ./conf/www.conf
+  mysql:
+    file: ./conf/mysqld.cnf
+  timezome:
+    file: /usr/share/zoneinfo/Asia/Shanghai
 
 networks:
-    lnmp:
+  lnmp:
