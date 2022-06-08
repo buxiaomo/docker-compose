@@ -1,7 +1,7 @@
 version: '3.6'
 services:
     nginx:
-        image: nginx:1.19.0-alpine
+        image: nginx:1.21.6-alpine
         ports:
             - 80:80/tcp
         networks:
@@ -39,7 +39,7 @@ services:
                 max-size: 100m
 
     php:
-        image: daocloud.io/buxiaomo/php:7.2.8-fpm-alpine3.7.ext
+        image: buxiaomo/php:7.3.33-fpm
         networks:
             lnmp:
         configs:
@@ -65,11 +65,11 @@ services:
                 order: start-first
                 parallelism: 1
                 delay: 10s
-        healthcheck:
-            test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 9000 || exit 1"]
-            interval: 10s
-            timeout: 5s
-            retries: 3
+        # healthcheck:
+        #     test: ["CMD-SHELL", "nc -w 1 127.0.0.1 -z 9000 || exit 1"]
+        #     interval: 10s
+        #     timeout: 5s
+        #     retries: 3
         logging:
             driver: json-file
             options:
@@ -77,7 +77,7 @@ services:
                 max-size: 100m
 
     redis:
-        image: redis:4.0.6
+        image: redis:6.2.7-alpine
         networks:
             lnmp:
         volumes:
@@ -103,9 +103,6 @@ services:
 
     mysql:
         image: mysql:5.7.20
-        hostname: mysql
-        ports:
-            - 3306:3306/tcp
         networks:
             lnmp:
         environment:
